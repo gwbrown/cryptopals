@@ -29,7 +29,7 @@ module BasicFunctions =
 
     // --- Problem 3 ---
 
-    let scoreText (str:string) =
+    let ScoreText (str:string) =
         let averageLetterPoints = 3.85
         let scoreChar ch =
             match ch with
@@ -67,19 +67,35 @@ module BasicFunctions =
             // Scores based on how far off from "average" letter distribution
             // the string is.  Always positive, closer to 0 is better.
 
-    let buildSingleByteKeyForMsg (b:byte) (msg:seq<byte>) = Seq.map (fun _ -> b) msg
+    let BuildSingleByteKeyForMsg (b:byte) (msg:seq<byte>) = Seq.map (fun _ -> b) msg
 
-    let possibleBytes = Seq.map (Convert.ToByte:int->byte) [|0 .. 255|]
+    let AllPossibleBytes = Seq.map (Convert.ToByte:int->byte) [|0 .. 255|]
 
-    let decryptSingleByteXOR (msg:seq<byte>) (b:byte) =
-        buildSingleByteKeyForMsg b msg |> XORBytes msg
+    let SingleByteXOR (msg:seq<byte>) (b:byte) =
+        BuildSingleByteKeyForMsg b msg |> XORBytes msg
 
     // --- Problem 4 ---
     let readLines filePath = IO.File.ReadLines(filePath)
 
-    let findBestSingleByteXORMatch (enc_msg:seq<byte>) :(float * string* byte) = 
-        Seq.map (fun (b:byte) -> (decryptSingleByteXOR enc_msg b, b)) possibleBytes 
+    let FindBestSingleByteXORMatch (enc_msg:seq<byte>) :(float * string* byte) = 
+        Seq.map (fun (b:byte) -> (SingleByteXOR enc_msg b, b)) AllPossibleBytes 
             |> Seq.map (fun (msg, b) -> (Bytes2String msg, b))
-            |> Seq.map (fun (msg, b) -> (scoreText msg, msg, b))
+            |> Seq.map (fun (msg, b) -> (ScoreText msg, msg, b))
             |> Seq.sortBy (fun (score,msg, b) -> score) 
             |> Seq.head
+
+    // --- Problem 4 ---
+
+    let Bytes2Hex bytes = 
+        Seq.map (fun (x : byte) -> String.Format("{0:X2}", x)) bytes 
+            |> String.concat String.Empty
+
+    let Text2Bytes (str:string) : byte[] = Text.Encoding.UTF8.GetBytes str
+
+    let BuildRepeatingKeyForMsg (msg:seq<byte>) (key:seq<byte>) : seq<byte> = 
+        let keyA = Seq.toArray key
+        let matchByte (i:int) _ =
+            keyA.[(i % keyA.Length)]
+        Seq.mapi matchByte msg
+
+    let RepeatingXOR (msg:seq<byte>) (key:seq<byte>) = BuildRepeatingKeyForMsg msg key |> XORBytes msg

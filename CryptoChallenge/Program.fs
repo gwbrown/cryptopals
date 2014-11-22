@@ -5,12 +5,12 @@ namespace CryptoChallenge
 module Main =
     open BasicFunctions
     open System
-    open Set1Problem4
+    open Set1Problem5
     [<EntryPoint>]
     let main argv = 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         // Begin user code.
-        p4_solution 
+        Console.WriteLine p5_solution
         // End user code.
         printfn "Press a key to end program."
         stopWatch.Stop()

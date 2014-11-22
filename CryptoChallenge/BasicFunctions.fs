@@ -82,5 +82,4 @@ module BasicFunctions =
             |> Seq.map (fun (msg, b) -> (Bytes2String msg, b))
             |> Seq.map (fun (msg, b) -> (scoreText msg, msg, b))
             |> Seq.sortBy (fun (score,msg, b) -> score) 
-            |> Seq.toArray
             |> Seq.head

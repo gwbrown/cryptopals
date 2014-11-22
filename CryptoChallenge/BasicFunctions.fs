@@ -60,7 +60,8 @@ module BasicFunctions =
                 | 'q' -> 0.10
                 | 'z' -> 0.07
                 | ' ' -> 0.0
-                | _ -> -5.0 // Not sure if this is a good idea, but it seems reasonable.
+                | '*' -> -20.0 // I see this a lot in bad messages but never in good ones.
+                | _ -> -10.0 // Not sure if this is a good idea, but it seems reasonable.
         Seq.map scoreChar (str.ToLower()) |> Seq.sum |> (fun score -> 
             Math.Abs ((score/(averageLetterPoints * (float str.Length))) - 1.0))
             // Scores based on how far off from "average" letter distribution
@@ -75,3 +76,11 @@ module BasicFunctions =
 
     // --- Problem 4 ---
     let readLines filePath = IO.File.ReadLines(filePath)
+
+    let findBestSingleByteXORMatch (enc_msg:seq<byte>) :(float * string* byte) = 
+        Seq.map (fun (b:byte) -> (decryptSingleByteXOR enc_msg b, b)) possibleBytes 
+            |> Seq.map (fun (msg, b) -> (Bytes2String msg, b))
+            |> Seq.map (fun (msg, b) -> (scoreText msg, msg, b))
+            |> Seq.sortBy (fun (score,msg, b) -> score) 
+            |> Seq.toArray
+            |> Seq.head

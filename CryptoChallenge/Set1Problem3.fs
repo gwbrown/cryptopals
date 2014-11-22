@@ -13,5 +13,5 @@ module Set1Problem3 =
             |> Seq.toArray
             |> Seq.take 5
     let p3_solution =
-        for (score, msg, key) in p3_msgList do
-            printfn "Message: \"%s\", Score: %f, Key: %s" msg score (Bytes2String [key])
+        let (score, msg, key) = (findBestSingleByteXORMatch p3_msg)
+        printfn "Message: \"%s\", Score: %f, Key: %s" msg score (Bytes2String [key])

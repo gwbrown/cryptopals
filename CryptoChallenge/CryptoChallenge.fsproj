@@ -52,8 +52,8 @@
     <Compile Include="Set1Problem1.fs" />
     <Compile Include="Set1Problem2.fs" />
     <Compile Include="Set1Problem3.fs" />
-    <Compile Include="Program.fs" />
     <Compile Include="Set1Problem4.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

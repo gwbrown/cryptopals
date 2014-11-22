@@ -12,3 +12,6 @@ module Set1Problem3 =
             |> Seq.sortBy (fun (score,msg, b) -> score) 
             |> Seq.toArray
             |> Seq.take 5
+    let p3_solution =
+        for (score, msg, key) in p3_msgList do
+            printfn "Message: \"%s\", Score: %f, Key: %s" msg score (Bytes2String [key])

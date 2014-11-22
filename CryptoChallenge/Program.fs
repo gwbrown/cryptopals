@@ -4,12 +4,10 @@ namespace CryptoChallenge
 
 module Main =
     open BasicFunctions
-    open Set1Problem3
     open System
     [<EntryPoint>]
     let main argv = 
-        for (score, msg, key) in p3_msgList do
-            printfn "Message: \"%s\", Score: %f, Key: %s" msg score (Bytes2String [key])
+        Set1Problem3.p3_solution
         printfn "Press a key to end program."
         let endofapp = Console.ReadKey()
         0 // return an integer exit code

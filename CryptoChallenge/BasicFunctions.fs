@@ -3,9 +3,7 @@
 module BasicFunctions = 
     open System
     // --- Problem 1 ---
-    let p1_msg = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
-    //"I'm killing your brain like a poisonous mushroom"
-
+    
     let HexByte2Bytes hex = Byte.Parse (hex, Globalization.NumberStyles.HexNumber)
 
     let HexString2Bytes hex =
@@ -22,23 +20,14 @@ module BasicFunctions =
         let bytesArr = Seq.toArray(bytes)
         Text.Encoding.UTF8.GetString (bytesArr, 0, bytesArr.Length)
 
-//    HexString2Bytes p1_msg |> Bytes2Base64
-
     // --- Problem 2 ---
-
-    let p2_msg = HexString2Bytes "1c0111001f010100061a024b53535009181c" //"the kid don't play"
-    let p2_key = HexString2Bytes "686974207468652062756c6c277320657965" //"hit the bull's eye"
 
     let XORBytes (msg:seq<byte>) (key:seq<byte>) =
         let bytePairs = Seq.zip msg key
         let XORByte (b1, b2) = b1 ^^^ b2
         Seq.map XORByte bytePairs
-    
-//    XORBytes p2_msg p2_key |> Bytes2String
 
     // --- Problem 3 ---
-
-    let p3_msg = HexString2Bytes "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 
     let scoreText (str:string) =
         let averageLetterPoints = 3.85
@@ -84,11 +73,5 @@ module BasicFunctions =
     let decryptSingleByteXOR (msg:seq<byte>) (b:byte) =
         buildSingleByteKeyForMsg b msg |> XORBytes msg
 
-    let p3_msgList = 
-        Seq.map (fun (b:byte) -> (decryptSingleByteXOR p3_msg b, b)) possibleBytes 
-            |> Seq.map (fun (msg, b) -> (Bytes2String msg, b))
-            |> Seq.map (fun (msg, b) -> (scoreText msg, msg, b))
-            |> Seq.sortBy (fun (score,msg, b) -> score) 
-            |> Seq.toArray
-            |> Seq.take 5
-
+    // --- Problem 4 ---
+    let readLines filePath = IO.File.ReadLines(filePath)

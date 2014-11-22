@@ -4,6 +4,7 @@ namespace CryptoChallenge
 
 module Main =
     open BasicFunctions
+    open Set1Problem3
     open System
     [<EntryPoint>]
     let main argv = 

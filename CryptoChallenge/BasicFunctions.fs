@@ -84,7 +84,7 @@ module BasicFunctions =
             |> Seq.sortBy (fun (score,msg, b) -> score) 
             |> Seq.head
 
-    // --- Problem 4 ---
+    // --- Problem 5 ---
 
     let Bytes2Hex bytes = 
         Seq.map (fun (x : byte) -> String.Format("{0:X2}", x)) bytes 

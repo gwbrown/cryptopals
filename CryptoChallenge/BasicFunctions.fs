@@ -99,3 +99,15 @@ module BasicFunctions =
         Seq.mapi matchByte msg
 
     let RepeatingXOR (msg:seq<byte>) (key:seq<byte>) = BuildRepeatingKeyForMsg msg key |> XORBytes msg
+
+    // --- Problem 6 ---
+
+    let HammingDistance (b1:seq<byte>) (b2:seq<byte>) : int =
+        let bytePairs = Seq.zip b1 b2
+        let HammingWeight (b:byte) = 
+            let bitPositions = {0 .. 7}
+            let isSet (byte1:byte) (offset:int) = if (byte1 &&& ((byte 1) <<< offset)) > (byte 0) then 1 else 0
+            Seq.map (isSet b) bitPositions |> Seq.sum
+        let HammingDistanceBytes (byte1, byte2) =
+            HammingWeight (byte1 ^^^ byte2)
+        Seq.map HammingDistanceBytes bytePairs |> Seq.sum

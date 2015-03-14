@@ -10,7 +10,7 @@ module Main =
     let main argv = 
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
         // Begin user code.
-        printfn "%d" testEditDistance
+        p6_solution p6_filename
         // End user code.
         printfn "Press a key to end program."
         stopWatch.Stop()

@@ -2,6 +2,10 @@
 
 module BasicFunctions = 
     open System
+
+    let debugPrint name thing = 
+        printfn "%s: %+A" name thing
+        thing
     // --- Problem 1 ---
     
     let HexByte2Bytes hex = Byte.Parse (hex, Globalization.NumberStyles.HexNumber)
@@ -60,8 +64,11 @@ module BasicFunctions =
                 | 'q' -> 0.10
                 | 'z' -> 0.07
                 | ' ' -> 0.0
-                | '*' -> -20.0 // I see this a lot in bad messages but never in good ones.
-                | _ -> -10.0 // Not sure if this is a good idea, but it seems reasonable.
+                | '.' -> 0.0
+                | '!' -> 0.0
+                | ':' -> 0.0
+                | '*' -> -20.0 // I see this a lot in bad messages but almost never in good ones.
+                | _ -> -100.0 // Not sure if this is a good idea, but it seems reasonable.
         Seq.map scoreChar (str.ToLower()) |> Seq.sum |> (fun score -> 
             Math.Abs ((score/(averageLetterPoints * (float str.Length))) - 1.0))
             // Scores based on how far off from "average" letter distribution
@@ -76,8 +83,9 @@ module BasicFunctions =
 
     // --- Problem 4 ---
     let readLines filePath = IO.File.ReadLines(filePath)
+    let readFile filePath = IO.File.ReadAllText(filePath)
 
-    let FindBestSingleByteXORMatch (enc_msg:seq<byte>) :(float * string* byte) = 
+    let FindBestSingleByteXORMatch (enc_msg:seq<byte>) : (float * string * byte) = 
         Seq.map (fun (b:byte) -> (SingleByteXOR enc_msg b, b)) AllPossibleBytes 
             |> Seq.map (fun (msg, b) -> (Bytes2String msg, b))
             |> Seq.map (fun (msg, b) -> (ScoreText msg, msg, b))
@@ -102,6 +110,8 @@ module BasicFunctions =
 
     // --- Problem 6 ---
 
+    let Base642Bytes b64 = Convert.FromBase64String(b64)
+
     let HammingDistance (b1:seq<byte>) (b2:seq<byte>) : int =
         let bytePairs = Seq.zip b1 b2
         let HammingWeight (b:byte) = 
@@ -110,4 +120,22 @@ module BasicFunctions =
             Seq.map (isSet b) bitPositions |> Seq.sum
         let HammingDistanceBytes (byte1, byte2) =
             HammingWeight (byte1 ^^^ byte2)
-        Seq.map HammingDistanceBytes bytePairs |> Seq.sum
+        let distances = Seq.map HammingDistanceBytes bytePairs
+        Seq.sum distances
+
+    let FindKeysizeScore message keysize =
+        let byte_numbers = { 0 .. keysize .. Seq.length message-1 }
+        let getKeysizeScore (msg : seq<byte>) = 
+            let getBytes offset = Seq.skip offset msg |> Seq.take keysize 
+            let blocks = Seq.map getBytes byte_numbers
+            let ham ((b1, b2) : (seq<byte> * seq<byte>)) : int = HammingDistance b1 b2
+            Seq.pairwise blocks |> Seq.map ham |> Seq.map float |> Seq.average
+        (keysize, getKeysizeScore message)
+    
+    let BuildSingleByteKeyBlocks (message : seq<byte>) (keysize : int) : seq<seq<byte>> =
+        let blocks = { 1 .. keysize}
+        let byte_numbers offset = { offset .. keysize .. Seq.length message-1 }
+        let buildBlock (msg : seq<byte>) (offset : int) = 
+            let getByteNumber num = Seq.skip num msg |> Seq.head
+            Seq.map getByteNumber (byte_numbers offset)
+        Seq.map (buildBlock message) blocks

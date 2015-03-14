@@ -18,18 +18,18 @@ module BasicFunctions =
                 str.Substring(0,2) :: split2s (str.Substring 2)
             else
                 str.Substring(0,1) :: split2s (str.Substring 1)
-        Seq.map HexByte2Bytes <| split2s hex
-    let Bytes2Base64 : seq<byte> -> string = Seq.toArray >> Convert.ToBase64String
-    let Bytes2String (bytes:seq<byte>) = 
-        let bytesArr = Seq.toArray(bytes)
+        split2s hex |> Seq.map HexByte2Bytes |> Seq.toArray
+    let Bytes2Base64 : byte [] -> string = Convert.ToBase64String
+    let Bytes2String (bytes:byte []) = 
+        let bytesArr = bytes
         Text.Encoding.UTF8.GetString (bytesArr, 0, bytesArr.Length)
 
     // --- Problem 2 ---
 
-    let XORBytes (msg:seq<byte>) (key:seq<byte>) =
-        let bytePairs = Seq.zip msg key
+    let XORBytes (msg:byte []) (key:byte []) =
+        let bytePairs = Array.zip msg key
         let XORByte (b1, b2) = b1 ^^^ b2
-        Seq.map XORByte bytePairs
+        Array.map XORByte bytePairs
 
     // --- Problem 3 ---
 
@@ -67,75 +67,78 @@ module BasicFunctions =
                 | '.' -> 0.0
                 | '!' -> 0.0
                 | ':' -> 0.0
-                | '*' -> -20.0 // I see this a lot in bad messages but almost never in good ones.
-                | _ -> -100.0 // Not sure if this is a good idea, but it seems reasonable.
+                | _ -> -20.0 // Not sure if this is a good idea, but it seems reasonable.
         Seq.map scoreChar (str.ToLower()) |> Seq.sum |> (fun score -> 
             Math.Abs ((score/(averageLetterPoints * (float str.Length))) - 1.0))
             // Scores based on how far off from "average" letter distribution
             // the string is.  Always positive, closer to 0 is better.
 
-    let BuildSingleByteKeyForMsg (b:byte) (msg:seq<byte>) = Seq.map (fun _ -> b) msg
+    let BuildSingleByteKeyForMsg (b:byte) (msg:byte []) = Array.map (fun _ -> b) msg
 
-    let AllPossibleBytes = Seq.map (Convert.ToByte:int->byte) [|0 .. 255|]
+    let AllPossibleBytes = Array.map (Convert.ToByte:int->byte) [|0 .. 255|]
 
-    let SingleByteXOR (msg:seq<byte>) (b:byte) =
+    let SingleByteXOR (msg:byte []) (b:byte) =
         BuildSingleByteKeyForMsg b msg |> XORBytes msg
 
     // --- Problem 4 ---
     let readLines filePath = IO.File.ReadLines(filePath)
     let readFile filePath = IO.File.ReadAllText(filePath)
 
-    let FindBestSingleByteXORMatch (enc_msg:seq<byte>) : (float * string * byte) = 
-        Seq.map (fun (b:byte) -> (SingleByteXOR enc_msg b, b)) AllPossibleBytes 
-            |> Seq.map (fun (msg, b) -> (Bytes2String msg, b))
-            |> Seq.map (fun (msg, b) -> (ScoreText msg, msg, b))
-            |> Seq.sortBy (fun (score,msg, b) -> score) 
+    let FindBestSingleByteXORMatch (enc_msg:byte []) : (float * string * byte) = 
+        Array.Parallel.map (fun (b:byte) -> (SingleByteXOR enc_msg b, b)) AllPossibleBytes 
+            |> Array.Parallel.map (fun (msg, b) -> (Bytes2String msg, b))
+            |> Array.Parallel.map (fun (msg, b) -> (ScoreText msg, msg, b))
+            |> Array.sortBy (fun (score, _, _) -> score) 
             |> Seq.head
 
     // --- Problem 5 ---
 
     let Bytes2Hex bytes = 
-        Seq.map (fun (x : byte) -> String.Format("{0:X2}", x)) bytes 
+        Array.map (fun (x : byte) -> String.Format("{0:X2}", x)) bytes 
             |> String.concat String.Empty
 
     let Text2Bytes (str:string) : byte[] = Text.Encoding.UTF8.GetBytes str
 
-    let BuildRepeatingKeyForMsg (msg:seq<byte>) (key:seq<byte>) : seq<byte> = 
-        let keyA = Seq.toArray key
+    let BuildRepeatingKeyForMsg (msg:byte []) (key:byte []) : byte [] = 
+        let keyA = key
         let matchByte (i:int) _ =
             keyA.[(i % keyA.Length)]
-        Seq.mapi matchByte msg
+        Array.mapi matchByte msg
 
-    let RepeatingXOR (msg:seq<byte>) (key:seq<byte>) = BuildRepeatingKeyForMsg msg key |> XORBytes msg
+    let RepeatingXOR (msg:byte []) (key:byte []) = BuildRepeatingKeyForMsg msg key |> XORBytes msg
 
     // --- Problem 6 ---
 
     let Base642Bytes b64 = Convert.FromBase64String(b64)
 
-    let HammingDistance (b1:seq<byte>) (b2:seq<byte>) : int =
-        let bytePairs = Seq.zip b1 b2
+    let HammingDistance (b1:byte []) (b2:byte []) : int =
+        let bytePairs = Array.zip b1 b2
         let HammingWeight (b:byte) = 
-            let bitPositions = {0 .. 7}
+            let bitPositions = [| 0 .. 7 |]
             let isSet (byte1:byte) (offset:int) = if (byte1 &&& ((byte 1) <<< offset)) > (byte 0) then 1 else 0
-            Seq.map (isSet b) bitPositions |> Seq.sum
+            Array.map (isSet b) bitPositions |> Array.sum
         let HammingDistanceBytes (byte1, byte2) =
             HammingWeight (byte1 ^^^ byte2)
-        let distances = Seq.map HammingDistanceBytes bytePairs
-        Seq.sum distances
+        let distances = Array.map HammingDistanceBytes bytePairs
+        Array.sum distances
 
     let FindKeysizeScore message keysize =
-        let byte_numbers = { 0 .. keysize .. Seq.length message-1 }
-        let getKeysizeScore (msg : seq<byte>) = 
-            let getBytes offset = Seq.skip offset msg |> Seq.take keysize 
-            let blocks = Seq.map getBytes byte_numbers
-            let ham ((b1, b2) : (seq<byte> * seq<byte>)) : int = HammingDistance b1 b2
-            Seq.pairwise blocks |> Seq.map ham |> Seq.map float |> Seq.average
+        let byte_numbers = [| 0 .. keysize .. Array.length message-keysize |]
+        let getKeysizeScore (msg : byte []) = 
+            let getBytes offset = Seq.skip offset msg |> Seq.take keysize |> Seq.toArray
+            let blocks = Array.map getBytes byte_numbers
+            let ham ((b1, b2) : (byte [] * byte [])) : int = HammingDistance b1 b2
+            (Seq.zip (Seq.skip 1 blocks) (Seq.initInfinite (fun _ -> (Seq.head blocks))) 
+                |> Seq.toArray 
+                |> Array.map ham 
+                |> Array.map float 
+                |> Array.average) / (float keysize)
         (keysize, getKeysizeScore message)
     
-    let BuildSingleByteKeyBlocks (message : seq<byte>) (keysize : int) : seq<seq<byte>> =
-        let blocks = { 1 .. keysize}
-        let byte_numbers offset = { offset .. keysize .. Seq.length message-1 }
-        let buildBlock (msg : seq<byte>) (offset : int) = 
+    let BuildSingleByteKeyBlocks (message : byte []) (keysize : int) : byte [] [] =
+        let blocks = [| 0 .. keysize - 1 |]
+        let byte_numbers offset = [| offset .. keysize .. Array.length message-1 |]
+        let buildBlock (msg : byte []) (offset : int) = 
             let getByteNumber num = Seq.skip num msg |> Seq.head
-            Seq.map getByteNumber (byte_numbers offset)
-        Seq.map (buildBlock message) blocks
+            Array.map getByteNumber (byte_numbers offset)
+        Array.map (buildBlock message) blocks

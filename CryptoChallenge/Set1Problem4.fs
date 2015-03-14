@@ -8,4 +8,4 @@ module Set1Problem4 =
         let p4_matches = Array.Parallel.map (HexString2Bytes >> FindBestSingleByteXORMatch) <| Seq.toArray p4_lines
         let best_p4_matches = Seq.sortBy (fun (score,msg, b) -> score) p4_matches |> Seq.head
         let (score, msg, key) = best_p4_matches
-        printfn "Message: \"%s\", Score: %f, Key: %s" msg score (Bytes2String [key])
+        printfn "Message: \"%s\", Score: %f, Key: %s" msg score (Bytes2String [|key|])

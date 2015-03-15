@@ -8,9 +8,9 @@ module BasicFunctions =
         thing
     // --- Problem 1 ---
     
-    let HexByte2Bytes hex = Byte.Parse (hex, Globalization.NumberStyles.HexNumber)
+    let Hex2Byte hex = Byte.Parse (hex, Globalization.NumberStyles.HexNumber)
 
-    let HexString2Bytes hex =
+    let Hex2Bytes hex =
         let rec split2s (str:string) =
             if str.Length = 0 then
                 []
@@ -18,7 +18,7 @@ module BasicFunctions =
                 str.Substring(0,2) :: split2s (str.Substring 2)
             else
                 str.Substring(0,1) :: split2s (str.Substring 1)
-        split2s hex |> Seq.map HexByte2Bytes |> Seq.toArray
+        split2s hex |> Seq.map Hex2Byte |> Seq.toArray
     let Bytes2Base64 : byte [] -> string = Convert.ToBase64String
     let Bytes2String (bytes:byte []) = 
         let bytesArr = bytes
@@ -97,7 +97,7 @@ module BasicFunctions =
         Array.map (fun (x : byte) -> String.Format("{0:X2}", x)) bytes 
             |> String.concat String.Empty
 
-    let Text2Bytes (str:string) : byte[] = Text.Encoding.UTF8.GetBytes str
+    let String2Bytes (str:string) : byte[] = Text.Encoding.UTF8.GetBytes str
 
     let BuildRepeatingKeyForMsg (msg:byte []) (key:byte []) : byte [] = 
         let keyA = key
@@ -142,3 +142,41 @@ module BasicFunctions =
             let getByteNumber num = Seq.skip num msg |> Seq.head
             Array.map getByteNumber (byte_numbers offset)
         Array.map (buildBlock message) blocks
+
+        
+    // --- Problem 7 ---
+    open System.Security
+
+    let CreateAESProvider (key : byte []) : Cryptography.AesCryptoServiceProvider =
+        new Cryptography.AesCryptoServiceProvider(KeySize = 128, Key = key, Mode = Cryptography.CipherMode.ECB, 
+                                                      Padding = Cryptography.PaddingMode.Zeros)
+    let ApplyAESTransform (transform : Cryptography.ICryptoTransform) (message : byte []) (blockNumber : int) : byte [] =
+        let blockBytes = transform.InputBlockSize
+        let offset = blockNumber * blockBytes
+        let enc_msg : byte [] = Array.create (blockBytes) (byte 0)
+        transform.TransformBlock(message, offset, blockBytes, enc_msg, 0) |> ignore
+        enc_msg
+
+    let AES_EncryptBlock (message : byte []) (key : byte []) (blockNumber : int) : byte [] = 
+        use aes = CreateAESProvider key
+        use enc = aes.CreateEncryptor()
+        ApplyAESTransform enc message blockNumber
+
+    let AES_DecryptBlock (message : byte []) (key : byte []) (blockNumber : int) : byte [] = 
+        use aes = CreateAESProvider key
+        use enc = aes.CreateDecryptor()
+        ApplyAESTransform enc message blockNumber
+        
+    let AES_ECB_Encrypt (message : byte []) (key : byte []) : byte [] =
+        let AES_Blocksize = 16
+        let blockNums = [| 0 .. AES_Blocksize .. message.Length - 1|]
+        blockNums
+            |> Array.map (AES_EncryptBlock message key)
+            |> Array.concat 
+
+    let AES_ECB_Decrypt (message : byte []) (key : byte []) : byte [] =
+        let AES_Blocksize = 16
+        let blockNums = [| 0 .. (message.Length - 1)/AES_Blocksize|]
+        blockNums
+            |> Array.map (AES_DecryptBlock message key)
+            |> Array.concat 
